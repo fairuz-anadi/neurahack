@@ -1,0 +1,38 @@
+# Raw competition data never goes into git (it lives outside the repo or in data/)
+data/*
+!data/.gitkeep
+*.csv
+!folds/*.csv
+*.parquet
+*.zip
+
+# Generated arrays, checkpoints, caches
+artifacts/*
+!artifacts/.gitkeep
+outputs/*
+!outputs/.gitkeep
+!outputs/eda_report.md
+!outputs/eval_*.json
+*.npy
+*.npz
+*.pt
+*.bin
+*.safetensors
+*.ckpt
+checkpoints/
+hf_cache/
+.cache/
+__pycache__/
+.pytest_cache/
+.ipynb_checkpoints/
+scamshield_src/
+
+# Credentials
+.env
+.env.*
+!.env.example
+kaggle.json
+*.pem
+*.token
+*_token.json
+token.json

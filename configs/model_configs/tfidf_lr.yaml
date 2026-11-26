@@ -1,0 +1,12 @@
+# Classical baseline (models/classical/tfidf_lr.py::TfidfLRConfig). Values here document the run;
+# the dataclass defaults are the source of truth.
+model: tfidf_lr
+text_view: normalized_text
+char_ngram: [2, 5]      # char_wb
+word_ngram: [1, 2]
+char_max_features: 200000
+word_max_features: 50000
+C: 4.0
+class_weight: balanced
+max_iter: 2000
+seed: 42

@@ -1,0 +1,28 @@
+# Label mappings from the ScamShield BD problem statement. Column order of every probability
+# matrix follows the order of these lists. Do not reorder.
+task_a:
+  0: Legitimate
+  1: MFS/OTP scam
+  2: Prize/lottery scam
+  3: Fake job/investment
+  4: Delivery/parcel phishing
+  5: Promotional spam
+
+task_b:   # multi-label; empty set is written as NONE
+  T1: Authority or organization impersonation
+  T2: Credential or sensitive-information harvesting
+  T3: Advance-fee or payment deception
+  T4: Prize or reward baiting
+  T5: Urgency, pressure, trust-building or social engineering
+  T6: Task-based earning, fake job or investment manipulation
+
+task_c:
+  0: No suspicious action
+  1: Disclose confidential information
+  2: Transfer money or pay a fee
+  3: Visit a link or website
+  4: Install an application, join a group or complete a task
+  5: Contact, call or reply
+
+none_token: NONE
+technique_separator: "|"

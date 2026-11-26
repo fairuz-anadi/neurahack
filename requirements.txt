@@ -1,0 +1,15 @@
+# Core (CPU) — all preinstalled on Kaggle. Ranges, not pins, so the same code runs on Kaggle's
+# python 3.10/3.11 image and on local python 3.14. Exact versions are printed by every notebook run
+# and recorded in the declaration. Tested locally with the versions in the comments.
+numpy>=1.24          # 2.5.1
+pandas>=2.0          # 3.0.5
+scikit-learn>=1.2    # 1.9.1
+scipy>=1.10          # 1.18.1
+PyYAML>=6.0          # 6.0.3
+nbformat>=5.9        # 5.11.1  (notebook builder)
+pytest>=7.0          # 9.1.1
+
+# Model families (install only what your family needs; Kaggle GPU images already include these)
+# torch>=2.1
+# transformers>=4.40
+# sentence-transformers>=2.7

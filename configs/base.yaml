@@ -1,0 +1,37 @@
+# Shared configuration for every model family.
+# Paths are resolved by common/data_loader.py::resolve_paths. Order of search for the data dir:
+#   1. env var SCAMSHIELD_DATA_DIR
+#   2. data.dir below (relative to the repo root)
+#   3. data.fallback_dirs (relative to the repo root)
+#   4. any folder under /kaggle/input that contains sample_submission.csv
+seed: 42
+
+data:
+  dir: data
+  fallback_dirs: [".."]          # local layout: E:\neurahack\sample.csv next to this repo
+  train_file: sample.csv          # labeled data (official name in the competition files)
+  test_file: test.csv             # unlabeled test set; only present on Kaggle for us
+  sample_submission_file: sample_submission.csv
+  id_col: id
+  text_col_candidates: [text, message, conversation, content]
+  turn_separator: "|||"           # observed in sample.csv conversations: "S: ... ||| R: ..."
+
+output:
+  artifacts_dir: artifacts        # OOF / test probability arrays (env SCAMSHIELD_ARTIFACTS_DIR overrides)
+  outputs_dir: outputs            # reports, fold manifest, submission (env SCAMSHIELD_OUTPUTS_DIR overrides)
+
+folds:
+  max_splits: 5
+  near_dup_threshold: 0.80        # char TF-IDF cosine for "same template" grouping
+  novel_rows_per_cluster: 3       # scenario clusters for the novel-scenario proxy
+  n_repeats: 5                    # repeated grouped CV manifests (stability estimate)
+
+submission:
+  technique_threshold: 0.5
+  # Official rule: non-fraudulent records use NONE. Only class 0 (Legitimate) is unambiguous.
+  # Class 5 (Promotional spam) is NONE in 100% of training rows but the statement does not say it
+  # is "non-fraudulent" -> left out until officially clarified.
+  nonfraud_classes: [0]
+  # If a fraud class is predicted but no technique passes the threshold, emit the single most
+  # likely technique instead of NONE (every fraud row in training has >= 1 technique). Off by default.
+  fraud_requires_technique: false
