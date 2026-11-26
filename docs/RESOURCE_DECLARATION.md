@@ -6,6 +6,8 @@ Add a row the moment you start using something. Undeclared resources are prohibi
 |---|---|---|---|---|
 | numpy, pandas, scipy, scikit-learn, PyYAML | library | all | PyPI | BSD-3 / BSD-3 / BSD-3 / BSD-3 / MIT |
 | nbformat | library | notebook builder (not in final run) | PyPI | BSD-3 |
+| torch, transformers, tokenizers | library | fine-tuning (Samprity) | PyPI | BSD-3 / Apache-2.0 / Apache-2.0 |
+| intfloat/multilingual-e5-small | pretrained model | fine-tuning (Samprity) | https://huggingface.co/intfloat/multilingual-e5-small | MIT (checked on model card, 26 Nov) |
 
 - Hosted APIs: **none** (team decision; `.env` is empty).
 - External labelled datasets: **none**.
