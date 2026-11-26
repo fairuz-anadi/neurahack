@@ -30,8 +30,23 @@ The local copy has **no saved outputs**. Check 12 must therefore be re-run on th
 - **D2 `ft` family.** No code in this notebook produces `ft`. To include it, Samprity's training and inference code must go into the notebook as a cell that writes `oof_ft_{A,B,C}.npy` (86×6, shared folds) and `test_ft_{A,B,C}.npy` (500000×6) to `/kaggle/working/`. The model must also be added to the declaration table. Otherwise drop `ft`. Copying precomputed `test_ft` files in breaks rule 1.
 - **D3 xlmr keep or drop** (the 8:15 call). Its OOF is repeat 0 only (5 fits), while emb and tfidf average 5 repeats. Averaged OOF is smoother, so the grid in 24 compares unlike things. Look at the "each family alone" lines in cell 24's output.
 - **D4 The ensemble CV printed by cell 24 is in-sample.** It is optimistic and fine for ranking, but do not quote it as an unbiased score.
-- **D5 Fixed emb weights.** 22/24 `W = EMB_W = [0.367, 0.417, 0.217]` and 22 `THR = 0.45` are hardcoded from an earlier CV run, not recomputed in this notebook. That is allowed (they are hyperparameters, not predictions) and is now declared. Recomputing them in-notebook would be cleaner.
+- **D5 Fixed emb weights.** 22/24 `W = EMB_W = [0.367, 0.417, 0.217]` and 22 `THR = 0.45` are hardcoded, not recomputed in this notebook. Where they come from: Rabib's dev notebook `new/notebook5543f434c7.ipynb` cell 4 ran a grid on the same 5×5 OOF. The best was `(0.4, 0.5, 0.1)` at thr 0.45 (proxy 0.788). Shrunk 50% toward equal, that gives exactly 0.367 / 0.417 / 0.217 (CV proxy/A/B/C 0.776 / 0.841 / 0.737 / 0.576). That is allowed (they are hyperparameters, not predictions) and is declared. Cell 20 already produces the per-model OOF, so the 6-line grid could be pasted into cell 24 to recompute them in-notebook.
+- **D7 Which run produced the second final.** "emb v1" (the 1/10 submission used today) was written by the dev notebook `notebook5543f434c7` (`sub_emb_v1.csv`). That notebook has no declaration and prints `sub.head(3)`, which shows 3 test-row predictions. 07 cannot reproduce that exact file: cell 24 renormalizes PA and re-runs the grid. The ZIP's `submission.csv` must be the v2 ensemble from 07, and that must be one of the 2 selected finals. If emb v1 is the other selection, it is safer to point it at a submission produced by a 07 version.
 - **D6 README disclosure wording.** `submission/README.md` §3.2 says some templates were written "with the general style of the unlabeled test messages in mind". Rule 2 forbids reasoning about individual test rows. The text says no row-level content was used. The team should confirm this sentence is accurate and keep or soften it deliberately.
+
+## Evidence from Rabib's dev notebooks (`new/`, not part of the submission)
+
+| Notebook / cell | What it shows |
+|---|---|
+| `notebook5543f434c7` 2 | `sentence-transformers 5.7.0 \| torch 2.11.0+cu130` (confirms the declared versions). Embedding time on a T4: e5 21.1 + bge 20.1 + LaBSE 6.1 = **47.3 min** (matches the runtime estimate). |
+| `notebook5543f434c7` 3 | Per-model 5×5 OOF proxy: e5 0.678, bge 0.755, LaBSE 0.642, equal-average emb 0.741 |
+| `notebook5543f434c7` 4 | Weight grid → 0.367 / 0.417 / 0.217, thr 0.45, CV proxy 0.776 (A 0.841, B 0.737, C 0.576); Brier 0.377 → 0.119 at tau 0.15; test label share {0: .363, 1: .152, 2: .098, 3: .096, 4: .136, 5: .155} |
+| `notebook7765c08314` 2 | Emb pseudo-labeling (50/class from a 100k test pool, 2 repeats): **base proxy 0.759 vs PL 0.725**, rejected |
+| `notebook7765c08314` 3–5 | Robustness: clean 0.781 / noisy 0.655 proxy. Noise augmentation: clean 0.743 / noisy 0.661; on 0.8·clean + 0.2·noisy, 0.756 baseline vs 0.727 aug (no α mix beats the baseline), **rejected** |
+
+These dev notebooks symlink `.npy` files from other notebooks' outputs (`7765` cell 1) and print 3 test-row predictions (`5543` cell 4). That is fine for development, but they must not be the submitted notebook. They are not committed: their outputs contain sample.csv text.
+
+**Saved-output note for the ZIP:** the Hugging Face download prints `Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN …`. The same line will appear in 07's Kaggle outputs (cells 18 and 22). It is a library warning, not a secret, and `check_zip.py` does not flag it. A plain grep for "token" will hit it, though, so reviewers may ask about it.
 
 ## Missing versions (placeholders left)
 
