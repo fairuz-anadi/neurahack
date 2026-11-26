@@ -47,6 +47,7 @@ accelerate, numpy, pandas, scikit-learn, scipy, PyYAML. No extra installs. Optio
 | Labeled Bangla SMS Spam and Ham (Islam et al.) | external data | data.mendeley.com/datasets/hhd43jbv9p/1 | CC BY 4.0 |
 | Financial scams detection dataset (Ahmed & Islam) | external data | data.mendeley.com/datasets/znsk27yk3h/2 | CC BY 4.0 |
 | SMS Phishing Dataset (Mishra & Soni) | external data | data.mendeley.com/datasets/f45bkkt8pr/1 | CC BY 4.0 |
+| embedded snapshot of the four CC BY 4.0 sets above (same code) | used only if Mendeley refuses the download | snapshots/README.md | CC BY 4.0 |
 | Bangalabarta | **not used** (CC BY-NC-SA 4.0; excluded by default) | data.mendeley.com/datasets/jfkfbw3gzh/3 | CC BY-NC-SA 4.0 |
 
 Hosted APIs: **none** (empty `.env`). Public code: none copied.
@@ -92,11 +93,15 @@ os.makedirs(WORK, exist_ok=True)
 CODE = os.path.join(WORK, 'scamshield_code')
 SRC_ZIP_B64 = "__SRC__"
 NB_COPY_B64 = "__NBCOPY__"
+EXT_SNAPSHOT_B64 = "__EXTSNAP__"   # CC BY 4.0 external data snapshot (fallback if the source download is refused)
 with zipfile.ZipFile(io.BytesIO(base64.b64decode(SRC_ZIP_B64))) as z:
     z.extractall(CODE)
 if NB_COPY_B64:
     with open(os.path.join(WORK, '__NBNAME__'), 'wb') as f:
         f.write(gzip.decompress(base64.b64decode(NB_COPY_B64)))
+if EXT_SNAPSHOT_B64:
+    with open(os.path.join(WORK, 'external_snapshot_v2.csv'), 'wb') as f:
+        f.write(gzip.decompress(base64.b64decode(EXT_SNAPSHOT_B64)))
 print('code files:', sum(len(f) for _, _, f in os.walk(CODE)), '->', CODE)
 '''
 
@@ -124,7 +129,8 @@ print('data dir:', DATA, '| test.csv present:', os.path.exists(os.path.join(DATA
 RUN = r'''
 # 4) RUN EVERYTHING — data, candidates, validation, selection, final training, 500k inference, submission, reports.
 #    Runs in a child process (GPU memory is always released); progress is streamed and saved to progress.log.
-cfg = dict(AUTOTRAIN, work=WORK, notebook_copy=os.path.join(WORK, '__NBNAME__'))
+cfg = dict(AUTOTRAIN, work=WORK, notebook_copy=os.path.join(WORK, '__NBNAME__'),
+           external_snapshot_path=os.path.join(WORK, 'external_snapshot_v2.csv'))
 with open(os.path.join(WORK, 'autotrain_config.json'), 'w') as f:
     json.dump(cfg, f)
 p = subprocess.Popen([sys.executable, '-u', '-m', 'models.finetune.autotrain', '--config-json',
@@ -175,11 +181,19 @@ def src_zip_b64() -> str:
     return base64.b64encode(buf.getvalue()).decode()
 
 
+def ext_snapshot_b64() -> str:
+    p = ROOT / "snapshots" / "external_v2.csv.gz"
+    return base64.b64encode(p.read_bytes()).decode() if p.exists() else ""
+
+
+EXT_B64 = ""
+
+
 def build(nb_copy_b64: str, src_b64: str):
     nb = nbf.v4.new_notebook()
     cells = [nbf.v4.new_markdown_cell(DECLARATION.strip())]
     for c in (CONFIG, SOURCES, SETUP, RUN, SUMMARY):
-        src = c.strip().replace("__SRC__", src_b64).replace("__NBCOPY__", nb_copy_b64).replace("__NBNAME__", NB_NAME)
+        src = c.strip().replace("__SRC__", src_b64).replace("__NBCOPY__", nb_copy_b64).replace("__NBNAME__", NB_NAME).replace("__EXTSNAP__", EXT_B64)
         cells.append(nbf.v4.new_code_cell(src))
     nb.cells = cells
     nb.metadata["kernelspec"] = {"name": "python3", "display_name": "Python 3", "language": "python"}
@@ -187,6 +201,10 @@ def build(nb_copy_b64: str, src_b64: str):
 
 
 def main():
+    global EXT_B64
+    EXT_B64 = ext_snapshot_b64()
+    if not EXT_B64:
+        raise SystemExit("snapshots/external_v2.csv.gz missing")
     src = src_zip_b64()
     core = build("", src)
     core_bytes = nbf.writes(core).encode("utf-8")

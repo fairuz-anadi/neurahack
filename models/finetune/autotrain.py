@@ -69,6 +69,7 @@ class AutoConfig:
     include_nc: bool = False            # Bangalabarta (CC BY-NC-SA) stays out unless explicitly allowed
     external_cap: int = 300
     external_reuse_path: str | None = None
+    external_snapshot_path: str | None = None   # embedded CC BY 4.0 snapshot, used if the source download is refused
     run_synth: bool = True
     synth_n: int = 900
     synth_max_min: float = 45.0
@@ -266,6 +267,11 @@ def run_pipeline(cfg: AutoConfig) -> dict:
             if sh(args, timeout_s=15 * 60) == 0 and out.exists():
                 paths["external"] = str(out)
                 run.stage("external", "ok", rows=int(len(pd.read_csv(out))))
+            elif cfg.external_snapshot_path and Path(cfg.external_snapshot_path).exists():
+                info = filter_near_sample(cfg.external_snapshot_path, str(out), sample_texts)
+                paths["external"] = str(out)
+                run.stage("external", "snapshot", note="source download refused - using the embedded CC BY 4.0 "
+                                                        "snapshot built by the same code", **info)
             else:
                 run.stage("external", "failed", note="download/build failed - continuing without external data")
         except Exception as e:

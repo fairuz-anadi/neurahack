@@ -22,6 +22,8 @@ Add a row the moment you start using something. Undeclared resources are prohibi
   in {1,2,3,4} and generic spam -> {1..5} as PARTIAL labels (Task B/C masked). Deduplicated, capped at 300 rows per
   (source, label), at most 1,200 sampled per training fit, rows with cosine >= 0.8 to any sample.csv row removed.
   Training-only; never used for validation.
+- External data snapshot: snapshots/external_v2.csv.gz (same build code, CC BY 4.0 sources only) is embedded
+  in the AutoTrain notebook and used only if the Mendeley download is refused (HTTP 403 seen from Kaggle).
 - Public code: none copied. (List repo/notebook URL + license if any is used.)
 - Pseudo-labeling / unlabeled test text: optional teacher step (models/finetune/llm.py teacher) — Qwen2.5-7B labels a
   seeded random sample of test rows by code; e5 student trains on them. Only model predictions; declared.
