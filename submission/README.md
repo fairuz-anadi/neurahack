@@ -4,7 +4,7 @@
 
 | | |
 |---|---|
-| **Team** | `<Team Name>` |
+| **Team** | Team_Hampton |
 | **Members** | Fairuz Anadi, Rabib, Samprity |
 | **Competition** | `nsucec-neurahack-2026-preliminary` (Kaggle Community Competition) |
 | **Notebook** | `notebook.ipynb` (one self-contained notebook that produces `submission.csv`) |

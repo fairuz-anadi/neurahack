@@ -1,11 +1,12 @@
-"""Build the final package: NeuraHack2026_<TeamName>_<TeamCode>.zip with EXACTLY
-submission.csv, one .ipynb, and .env (empty if no API is used).
+"""Build the final package NeuraHack_Preli_<Team_Name>.zip (guidance email, 26 Nov) with EXACTLY
+four items: submission.csv, notebook.ipynb, README.md and .env (empty if no API is used).
 
-    python scripts/build_zip.py --team "TeamName" --code NH000 --csv outputs/submission.csv \
-        --notebook notebooks/05_final_pipeline.ipynb [--env path/to/.env]
+    python scripts/build_zip.py --team Team_Hampton --csv outputs/submission.csv \
+        --notebook notebooks/07_final_team.ipynb --readme submission/README.md [--env path/to/.env]
 
 Refuses to build if the submission is invalid, the notebook contains something that looks like an
-API key, or the .env is missing. Never commit the resulting zip or a filled .env.
+API key, the README is missing or still has placeholders, or the .env is missing. Never commit the
+resulting zip or a filled .env.
 """
 import _bootstrap  # noqa: F401
 
@@ -23,6 +24,8 @@ from common.submission import validate_submission
 
 KEY_PATTERNS = [r"sk-[A-Za-z0-9_-]{20,}", r"AIza[0-9A-Za-z_-]{30,}", r"hf_[A-Za-z0-9]{30,}",
                 r"ghp_[A-Za-z0-9]{30,}", r"sk-ant-[A-Za-z0-9_-]{20,}", r"\"key\"\s*:\s*\"[0-9a-f]{32}\""]
+README_PLACEHOLDERS = r"<Team Name>|\[from run\]"
+EXPECTED = [".env", "README.md", "notebook.ipynb", "submission.csv"]
 
 
 def scan_notebook(path: Path) -> list[str]:
@@ -40,35 +43,45 @@ def scan_notebook(path: Path) -> list[str]:
     return problems
 
 
+def scan_readme(path: Path) -> list[str]:
+    if not path.is_file():
+        return [f"README not found: {path}"]
+    if re.search(README_PLACEHOLDERS, path.read_text(encoding="utf-8")):
+        return ["README still has placeholders (<Team Name> or [from run])"]
+    return []
+
+
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--team", required=True)
-    ap.add_argument("--code", required=True)
+    ap.add_argument("--team", required=True, help="registered team name, e.g. Team_Hampton")
     ap.add_argument("--csv", default="outputs/submission.csv")
-    ap.add_argument("--notebook", default="notebooks/05_final_pipeline.ipynb")
+    ap.add_argument("--notebook", default="notebooks/07_final_team.ipynb")
+    ap.add_argument("--readme", default="submission/README.md")
     ap.add_argument("--env", default=None, help="path to the .env to include; default: an empty .env")
     args = ap.parse_args()
 
     cfg = load_config()
     _, out_dir = output_dirs(cfg)
-    csv, nb = Path(args.csv), Path(args.notebook)
+    csv, nb, readme = Path(args.csv), Path(args.notebook), Path(args.readme)
     problems = validate_submission(pd.read_csv(csv, keep_default_na=False), load_sample_submission(cfg),
                                    cfg["submission"]["nonfraud_classes"])
     problems += scan_notebook(nb)
+    problems += scan_readme(readme)
     if problems:
         print("REFUSING TO BUILD:\n - " + "\n - ".join(problems))
         sys.exit(1)
 
     env_bytes = Path(args.env).read_bytes() if args.env else b""
-    team = re.sub(r"[^A-Za-z0-9]+", "", args.team)
-    zpath = out_dir / f"NeuraHack2026_{team}_{args.code}.zip"
+    team = re.sub(r"[^A-Za-z0-9_]+", "_", args.team.strip()).strip("_")
+    zpath = out_dir / f"NeuraHack_Preli_{team}.zip"
     with zipfile.ZipFile(zpath, "w", zipfile.ZIP_DEFLATED) as z:
         z.write(csv, "submission.csv")
-        z.write(nb, nb.name)
+        z.write(nb, "notebook.ipynb")
+        z.write(readme, "README.md")
         z.writestr(".env", env_bytes)
     with zipfile.ZipFile(zpath) as z:
         names = z.namelist()
-    assert len(names) == 3 and "submission.csv" in names and ".env" in names, names
+    assert sorted(names) == EXPECTED, names
     print(f"built {zpath} with {names} (.env {'empty' if not env_bytes else f'{len(env_bytes)} bytes'})")
 
 
