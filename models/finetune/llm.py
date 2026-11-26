@@ -273,7 +273,9 @@ def synth_messages(spec: dict, per_prompt: int) -> list[dict]:
             f"Scenario: {spec['scenario']}. Brand/sender idea: {spec['brand']} (vary it). Amount idea: Tk {spec['amount']}.\n"
             f"Language: {spec['lang']}. Format: {spec['format']}.\n"
             "Mask phone numbers as 01XXXXXXXXX and defang links like hxxps://example[.]com. No real personal data.\n"
-            "Make each record different in wording, sender and details. Label techniques and action correctly.\n"
+            "Make each record different in wording, sender and details. Label techniques and action correctly "
+            "(typical: class 1 uses T2, class 2 uses T4, class 3 uses T6, a claimed organization adds T1, pressure or "
+            "trust-building adds T5, a fee or payment adds T3).\n"
             'Reply with ONLY a JSON array: [{"text": str, "label": int, "techniques": "T1|T5" or "NONE", "action": int}, ...]')
     return [{"role": "system", "content": LABEL_GUIDE}, {"role": "user", "content": want}]
 
@@ -305,25 +307,56 @@ def quality_filter(rows: list[dict], near_dup: float = 0.9) -> tuple[pd.DataFram
     return df, rep
 
 
-def generate_synthetic(gen, n_target: int, seed: int = 42, per_prompt: int = 5) -> tuple[pd.DataFrame, dict]:
+def _parse_spec_output(spec: dict, text: str) -> list[dict] | None:
+    arr = parse_json(text)
+    if isinstance(arr, dict):
+        arr = [arr]
+    if not isinstance(arr, list):
+        return None
+    rows = []
+    for obj in arr:
+        r = clean_record(obj, want_label=spec["label"]) if isinstance(obj, dict) else None
+        if r:
+            r["spec_lang"], r["spec_format"] = spec["lang"], spec["format"]
+            rows.append(r)
+    return rows
+
+
+def generate_synthetic(gen, n_target: int, seed: int = 42, per_prompt: int = 5, chunk: int = 32,
+                       checkpoint_path: str | None = None, max_minutes: float | None = None,
+                       retry: bool = True) -> tuple[pd.DataFrame, dict]:
+    """Prompts are processed in chunks; valid rows are checkpointed after each chunk so a time limit or crash keeps
+    the finished work. Prompts whose output cannot be parsed get ONE retry (bounded)."""
     specs = synth_specs(int(np.ceil(n_target / per_prompt)), seed)
-    outs = gen([synth_messages(s, per_prompt) for s in specs])
-    rows, bad = [], 0
-    for s, o in zip(specs, outs):
-        arr = parse_json(o)
-        if isinstance(arr, dict):
-            arr = [arr]
-        if not isinstance(arr, list):
-            bad += 1
-            continue
-        for obj in arr:
-            r = clean_record(obj, want_label=s["label"]) if isinstance(obj, dict) else None
-            if r:
-                r["spec_lang"], r["spec_format"] = s["lang"], s["format"]
-                rows.append(r)
+    t0, rows, failed, stopped = time.time(), [], [], False
+    for i in range(0, len(specs), chunk):
+        part = specs[i:i + chunk]
+        for spec, o in zip(part, gen([synth_messages(sp, per_prompt) for sp in part])):
+            got = _parse_spec_output(spec, o)
+            if got is None:
+                failed.append(spec)
+            else:
+                rows.extend(got)
+        if checkpoint_path:
+            pd.DataFrame(rows).to_csv(checkpoint_path, index=False)
+        print(f"[synth] {i + len(part)}/{len(specs)} prompts, {len(rows)} raw rows, {len(failed)} failed", flush=True)
+        if max_minutes and (time.time() - t0) / 60 > max_minutes:
+            print(f"[synth] time limit {max_minutes} min reached - keeping finished prompts", flush=True)
+            stopped = True
+            break
+    retried_ok = 0
+    if retry and failed and not stopped:
+        again = [dict(sp, scenario=sp["scenario"] + " (write valid JSON only)") for sp in failed]
+        for i in range(0, len(again), chunk):
+            for spec, o in zip(again[i:i + chunk], gen([synth_messages(sp, per_prompt) for sp in again[i:i + chunk]])):
+                got = _parse_spec_output(spec, o)
+                if got:
+                    rows.extend(got)
+                    retried_ok += 1
+            if max_minutes and (time.time() - t0) / 60 > max_minutes:
+                break
     df, rep = quality_filter(rows)
-    rep["unparseable_prompts"] = bad
-    rep["prompts"] = len(specs)
+    rep.update(unparseable_prompts=len(failed), retried_ok=retried_ok, prompts=len(specs), time_limited=stopped)
     if not df.empty:
         df.insert(0, "id", [f"syn{seed}_{i:05d}" for i in range(len(df))])
     return df, rep
@@ -455,7 +488,8 @@ def main(argv=None):
     else:
         gen = make_generate_fn(tok, model, max_new_tokens=220 * args.per_prompt, batch_size=args.batch)
         t1 = time.time()
-        df, rep = generate_synthetic(gen, args.n, seed=args.seed, per_prompt=args.per_prompt)
+        df, rep = generate_synthetic(gen, args.n, seed=args.seed, per_prompt=args.per_prompt,
+                                     checkpoint_path=str(args.out) + ".partial.csv", max_minutes=args.max_minutes)
         rep["seconds"] = round(time.time() - t1, 1)
         rep["model"] = args.model
         df.to_csv(args.out, index=False)
