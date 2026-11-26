@@ -69,3 +69,15 @@ rows only. External rows are never placed in validation.
 - GPU throughput is NOT measured yet: run cell 2 of `notebooks/04_finetune.ipynb` on Kaggle before the 500k run.
 - Truncation: training texts are ≤ 89 tokens; 12-turn test conversations can exceed 128 tokens → compare
   max_len 128 vs 256 cost on GPU and check how many test rows get truncated (aggregate count only).
+
+## Validation limitations (Task D calibration and CV)
+- **Calibration is not fully nested.** For fold k the temperature is fit on the OOF predictions of the other
+  folds. Fold k's own labels are never used directly, but the models that produced those other-fold predictions
+  were trained on data that included fold k's rows. So fold k's labels can influence its temperature at second
+  order, through one scalar. Expected effect: small (temperatures vary only 0.38-0.51 across folds). A fully
+  clean estimate needs nested CV (≈5× training cost); not run.
+- The test-time temperature is fit on all 86 OOF rows (no test labels involved).
+- With 86 rows, one seed, and per-class supports of 9-32, F1 differences under ~0.02-0.04 are within noise.
+  Seed variance of fine-tuning has not been measured yet.
+- Proxies (robust/novel/domain) are local stand-ins; they do not reproduce the hidden subsets.
+- max_len 128: training texts are ≤ 80 tokens; truncation on test is measured by cell 4 (aggregate only).
