@@ -140,6 +140,10 @@ def main():
                 if not re.search(pat, d, re.I): E.append(f"notebook declaration: part {part} not found")
             ph = sorted(set(re.findall(PLACEHOLDERS, d)))
             if ph: E.append(f"notebook declaration still has placeholders: {ph}")
+        for i, c in enumerate(cells[1:], 2):
+            if c.get("cell_type") == "markdown":
+                ph = sorted(set(re.findall(PLACEHOLDERS, "".join(c.get("source", [])))))
+                if ph: E.append(f"notebook markdown cell {i} still has placeholders: {ph}")
         P = test_prefixes(a.test) if a.test else None
         total_out, printed_share = 0, None
         for i, c in enumerate(cells, 1):
