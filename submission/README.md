@@ -60,7 +60,7 @@ The same cleaning is applied to training, validation and test text:
   - multi-turn conversations with speaker markers and group chats;
   - **hard legitimate cases**: genuine OTP messages that warn "do not share", transaction confirmations, real delivery updates, legitimate cashback promotions, and people quoting a scam to warn a friend (class 0).
 - **Noise augmentation:** 35% of synthetic rows are corrupted: typos, character insertions and deletions, lookalike characters, zero-width characters, leetspeak, emojis and short meaningless strings. The 86 real rows are kept clean and upweighted ×6. An ablation chose this setting (Section 5).
-- **Disclosure:** no test row text and no test label was copied into the training data. Some templates were written with the general style of the unlabeled test messages in mind (types of brands, warning conversations, message wrappers). No row-level content was taken.
+- **Disclosure:** no test row text and no test label was copied into the training data, and the generator code never reads `test.csv`. Some templates were written with the general style of the unlabeled test messages in mind (types of brands, warning conversations, message wrappers). No row-level content was taken.
 
 ### 3.3 Model families
 
@@ -70,12 +70,13 @@ The same cleaning is applied to training, validation and test text:
 | `xlmr` | `xlm-roberta-base`, fine-tuned | Multi-task head: label softmax, action softmax and 6 technique sigmoids. 3 epochs, learning rate 3e-5, batch size 32, max length 192, fp16. |
 | `emb` | `multilingual-e5-large`, `bge-m3`, `LaBSE` (frozen) | Sentence embeddings of the cleaned text; logistic-regression heads per encoder for A, B and C, blended with weights chosen by CV. |
 
-### 3.4 Semi-supervised pseudo-labeling (declared, Rulebook §5)
-After the first full training run, the notebook selects up to **4,000 test rows per class** on which TF-IDF and XLM-R **agree with high confidence**. It adds them to the training data and trains one more round.
-- This is done entirely by code and uses **only model predictions**; no test labels are looked up or edited by hand.
-- An in-fold check measures the gain on the real labeled rows before the round is applied. It found **+0.02 to +0.06 Task A F1** for TF-IDF. If the check shows a loss larger than 0.01, the notebook turns pseudo-labeling off automatically.
-- With pseudo-labels, the final models train on up to about 36,000 rows (12k synthetic + up to 24k pseudo-labeled + upweighted real rows).
-- This applies to the `tfidf` and `xlmr` families only. For the embedding family, pseudo-labeling and noise augmentation were tested and rejected by CV, so that family is trained on the 86 real rows only. Pseudo-labeling scored proxy 0.725 vs 0.759 without it. Noise augmentation scored 0.727 vs 0.756 on 0.8 × clean + 0.2 × noisy text.
+### 3.4 No training on test text (Rulebook v1.3, §5 item 3)
+Every model is trained only on the 86 rows of `sample.csv` and the synthetic rows generated in the notebook. `test.csv` is used **only for inference**:
+- no pseudo-labeling, self-training, label propagation, clustering-based labeling or domain adaptation on test text;
+- TF-IDF vocabularies, logistic-regression heads, fine-tuned weights, ensemble weights, thresholds and the confidence temperature are all fitted on training data or on out-of-fold predictions of the labeled rows.
+
+An earlier draft of the pipeline had a pseudo-labeling round. It was removed when the rulebook was updated to v1.3; in our tests it changed the Task A score by +0.000 and only 2.6% of test labels.
+- The embedding family never used test text: it is trained on the 86 real rows only. Noise augmentation of those rows was tested and rejected by CV (proxy 0.727 vs 0.756).
 
 ### 3.5 Ensemble, decoding and calibration
 - **Ensemble:** the family probabilities for A, B and C are averaged with weights. The weights and the technique threshold are chosen by grid search on out-of-fold predictions, then **shrunk 50% toward equal weights** to avoid overfitting 86 rows.
@@ -127,7 +128,7 @@ After the first full training run, the notebook selects up to **4,000 test rows 
 | `bge-m3` | Hugging Face Hub (`BAAI/bge-m3`) | MIT | Frozen sentence embeddings |
 | `LaBSE` | Hugging Face Hub (`sentence-transformers/LaBSE`) | Apache-2.0 | Frozen sentence embeddings |
 | `sentence-transformers` | PyPI | Apache-2.0 | Encoding with the three models above |
-| Competition data | Kaggle competition | Organizer | `sample.csv` for training and validation; `test.csv` for inference and pseudo-labeling |
+| Competition data | Kaggle competition | Organizer | `sample.csv` for training and validation; `test.csv` for inference only |
 
 - **No external datasets.**
 - **No hosted LLM or inference API calls.** API steps: none. API cost: 0. The `.env` file is empty.
@@ -155,7 +156,7 @@ After the first full training run, the notebook selects up to **4,000 test rows 
 |---|---|
 | Synthetic data and TF-IDF CV | ~10 min |
 | XLM-R CV and final training | ~30 min |
-| Test inference and pseudo-label round | ~45–60 min |
+| Test inference | ~15–20 min |
 | Embeddings | ~47 min |
 | Heads, analysis and ensemble | ~20 min |
 
@@ -169,7 +170,7 @@ After the first full training run, the notebook selects up to **4,000 test rows 
 
 - [x] Every prediction is produced by code in `notebook.ipynb`; no hand labeling, editing or hardcoded predictions.
 - [x] Synthetic training data is generated by code in the notebook; no test example or label is copied.
-- [x] Pseudo-labeling on `test.csv` is done by code, uses only model predictions, and is declared (Rulebook §5).
+- [x] No model learns from `test.csv` in any form (no pseudo-labeling or domain adaptation); test text is used for inference only.
 - [x] All pretrained models and libraries are declared with source and license; no external datasets or APIs.
 - [x] No API keys anywhere; `.env` is included and empty.
 - [x] The submission format matches `sample_submission.csv`: every test `id` exactly once, valid codes, no blank fields.
