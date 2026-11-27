@@ -88,6 +88,9 @@ def set_src(cell, s):
     cell["source"] = [l + "\n" for l in lines[:-1]] + [lines[-1]]
 
 
+TAIL = open(__file__.replace("make_v3_notebook.py", "v3_final_tail.py"), encoding="utf-8").read()
+
+
 def v3_edits(nb):
     C = nb["cells"]
     get = lambda i: "".join(C[i]["source"])
@@ -106,12 +109,18 @@ def v3_edits(nb):
     s = rep(s, SEED_OLD, SEED_NEW)
     set_src(C[13], s)
 
+    s = get(len(C) - 1)
+    i = s.index("# ---- confidence: temperature by Brier ----")
+    set_src(C[-1], s[:i] + TAIL.rstrip() + "\n")
+
     s = get(0)
     s = rep(s, "* Consistency rules from the labeling guide:",
             "* **v3 additions:** extra templates for the error types seen in out-of-fold predictions on `sample.csv` (telecom, courier,\n"
             "  HR and institution notices that are legitimate; non-scam real-estate and service promotions; prize messages that ask\n"
             "  for an OTP, which are class 1; shopping-task earning schemes, which are class 3). They were written from the labeled\n"
             "  rows and general knowledge, without reading test text. The final XLM-R test predictions average 2 seeds (42, 43).\n"
+            "  The last cell scores two candidates out-of-fold (the shrunk 3-family ensemble and the TF-IDF + XLM-R blend)\n"
+            "  and writes the one with the higher CV proxy to `submission.csv`; both are also saved as `sub_<name>.csv`.\n"
             "* Consistency rules from the labeling guide:")
     set_src(C[0], s)
     return nb
