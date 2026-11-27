@@ -5,7 +5,7 @@ for Task A (class 0–5), Task B (techniques T1–T6), Task C (victim action 0�
 Team: Fairuz Anadi, Rabib, Samprity. Read `docs/TEAM_CONTRACT.md` before writing code.
 
 **Never commit competition data (`sample.csv`, `test.csv`, `sample_submission.csv`), `.env`, Kaggle or Hugging Face
-tokens, or model checkpoints. Keep this repository private: sharing competition code publicly outside Kaggle is against the rules.**
+tokens, or model checkpoints.**
 
 ## Final notebooks (run on Kaggle, GPU T4)
 
