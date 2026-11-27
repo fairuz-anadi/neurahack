@@ -19,7 +19,8 @@ _TECH_RE = re.compile(r"^(NONE|T[1-6](\|T[1-6])*)$")
 
 
 def build_submission(test_ids, pA, pB, pC, confidence=None, technique_threshold=0.5,
-                     nonfraud_classes=(0,), fraud_requires_technique=False) -> pd.DataFrame:
+                     nonfraud_classes=(0, 5), fraud_requires_technique=False) -> pd.DataFrame:
+    """Official convention (Data tab): classes 0 and 5 have techniques NONE and action 0."""
     n = len(test_ids)
     for t, P in (("A", pA), ("B", pB), ("C", pC)):
         validate_probs(t, P, n, "submission input")
@@ -31,6 +32,7 @@ def build_submission(test_ids, pA, pB, pC, confidence=None, technique_threshold=
         fraud_empty = ~np.isin(label, nonfraud_classes) & ~techB.any(1)
         techB[fraud_empty, np.asarray(pB)[fraud_empty].argmax(1)] = True
     techB[np.isin(label, nonfraud_classes)] = False
+    action[np.isin(label, nonfraud_classes)] = 0
     conf = np.asarray(pA).max(1) if confidence is None else np.asarray(confidence, float)
     conf = np.clip(conf, 0.0, 1.0)
     return pd.DataFrame({
@@ -43,7 +45,7 @@ def build_submission(test_ids, pA, pB, pC, confidence=None, technique_threshold=
 
 
 def validate_submission(sub: pd.DataFrame, sample: pd.DataFrame | None = None,
-                        nonfraud_classes=(0,)) -> list[str]:
+                        nonfraud_classes=(0, 5)) -> list[str]:
     """Returns a list of problems (empty list = valid)."""
     p = []
     if list(sub.columns) != SUBMISSION_COLS:
@@ -68,6 +70,9 @@ def validate_submission(sub: pd.DataFrame, sample: pd.DataFrame | None = None,
     nf = sub["label"].isin(nonfraud_classes) & (sub["techniques"] != NONE_TOKEN)
     if nf.any():
         p.append(f"{int(nf.sum())} non-fraud rows (label in {list(nonfraud_classes)}) have techniques != NONE")
+    na = sub["label"].isin(nonfraud_classes) & (pd.to_numeric(sub["action"], errors="coerce") != 0)
+    if na.any():
+        p.append(f"{int(na.sum())} non-fraud rows (label in {list(nonfraud_classes)}) have action != 0")
     c = pd.to_numeric(sub["confidence"], errors="coerce")
     if c.isna().any() or not np.isfinite(c).all() or not c.between(0, 1).all():
         p.append("confidence must be finite and within [0, 1]")
