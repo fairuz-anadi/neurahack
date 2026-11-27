@@ -1,5 +1,13 @@
 # Rule-compliance audit: `notebooks/07_final_team.ipynb`
 
+> **Update, 27 Nov, about 12:00.** Rulebook v1.3 bans training on test text. Anadi's `09_final_team_v3` / `10_final_team_v3_large` remove pseudo-labeling and the in-fold pseudo check, and use `test.csv` for inference only, so **D1 is resolved**. Those notebooks started from the original 07. Branch `v3-declaration-review` therefore applies only the markdown and print fixes, as Anadi asked, via `scripts/patch_markdown.py`:
+> * the 5-part declaration, updated for v1.3, the v3 templates, 2-seed XLM-R and base vs large;
+> * a Review section at the end;
+> * `print(chk.head())` → aggregate print;
+> * python added to the version print.
+>
+> **Not ported, per "markdown/print only":** the `SEED = 42` restatements, the pinned pip install and the extra validator asserts. **D2 (`ft` must be notebook code) is still open.**
+
 Audited on 27 Nov 2026 (branch `audit-fixes`), by static analysis only. Nothing was run, and no test row was opened or printed.
 Cell numbers are 1-based positions in the notebook (24 cells). The clean copy keeps the same numbering.
 The local copy has **no saved outputs**. Check 12 must therefore be re-run on the notebook downloaded from the Kaggle version that goes into the ZIP: `scripts/check_zip.py` does this.
