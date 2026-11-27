@@ -88,6 +88,27 @@ The setup cell (section 1) prints numpy, pandas, scikit-learn, scipy, torch and 
 None. No API is called, no key is used, `.env` is empty, and the cost is 0.
 """
 
+FT_DECL = [  # applied with --ft (notebook has the FT cell B4)
+    ("| `sentence-transformers/LaBSE` | embedding model | Hugging Face Hub | Apache-2.0 | Frozen sentence embeddings |\n",
+     "| `sentence-transformers/LaBSE` | embedding model | Hugging Face Hub | Apache-2.0 | Frozen sentence embeddings |\n"
+     "| `intfloat/multilingual-e5-small` | transformer | Hugging Face Hub | MIT | Fine-tuned here (FT family, cell B4) |\n"
+     "| `Qwen/Qwen2.5-7B-Instruct` | open-weight LLM, run locally on Kaggle (no API) | Hugging Face Hub | Apache-2.0 | Wrote the 625 synthetic rows embedded in cell B4, offline, from the official class definitions only |\n"
+     "| BTTC: Bangla Tri-class Text Corpus (DOI 10.17632/5wrm959d6f.1) | dataset | Mendeley Data | CC BY 4.0 | External training rows (FT family only) |\n"
+     "| Labeled Bangla SMS Spam and Ham (DOI 10.17632/hhd43jbv9p.1) | dataset | Mendeley Data | CC BY 4.0 | External training rows (FT family only) |\n"
+     "| Financial scams detection dataset (DOI 10.17632/znsk27yk3h.2) | dataset | Mendeley Data | CC BY 4.0 | External training rows (FT family only) |\n"
+     "| SMS Phishing Dataset, Mishra & Soni (DOI 10.17632/f45bkkt8pr.1) | dataset | Mendeley Data | CC BY 4.0 | External training rows (FT family only) |\n"),
+    ("* **External labeled datasets:** none. The synthetic",
+     "* **External labeled datasets:** only in the FT family (cell B4): 2,904 rows from the four CC BY 4.0 Mendeley datasets above, "
+     "embedded in the cell, checked by SHA-256 and used for training only. Rows close to `sample.csv` are removed. None of these rows, "
+     "and none of the 625 Qwen-written rows, matches a test message. The other families use no external data. Part A's synthetic"),
+    ("  * `emb`: frozen",
+     "  * `ft` (Samprity, cell B4): fine-tuned `intfloat/multilingual-e5-small` with the same multi-task head, trained on the 86 rows "
+     "(×6), the Qwen-written synthetic rows and up to 600 external rows per fit, plus one corrupted copy. CV uses the first repeat (5 fits).\n"
+     "  * `emb`: frozen"),
+    ("(to download the four models)", "(to download the five models)"),
+    (" on a T4.\n* **Output.**", " on a T4, plus about 10 min for the FT family.\n* **Output.**"),
+]
+
 REVIEW = """# Review
 
 ## Why each model
@@ -128,6 +149,7 @@ def main():
     ap.add_argument("--xlmr", choices=["base", "large"], required=True)
     ap.add_argument("--prints", action="store_true", help="also apply the print fixes to code cells (repo copies only)")
     ap.add_argument("--out", help="write here instead of overwriting")
+    ap.add_argument("--ft", action="store_true", help="the notebook includes Samprity's FT cell (B4): declare its resources")
     a = ap.parse_args()
     v = XLMR[a.xlmr]
     nb = json.load(open(a.notebook, encoding="utf-8"))
@@ -139,7 +161,12 @@ def main():
     if model_in_nb and model_in_nb[0] != v["model"]:
         sys.exit(f"--xlmr {a.xlmr} but the notebook's default MODEL_NAME is {model_in_nb[0]}")
 
-    cells[0]["source"] = DECLARATION.format(**v).rstrip("\n").splitlines(keepends=True)
+    decl = DECLARATION.format(**v)
+    if a.ft:
+        for old, new in FT_DECL:
+            assert decl.count(old) == 1, old[:60]
+            decl = decl.replace(old, new)
+    cells[0]["source"] = decl.rstrip("\n").splitlines(keepends=True)
     review = {"cell_type": "markdown", "metadata": {}, "source": REVIEW.format(**v).rstrip("\n").splitlines(keepends=True)}
     if cells[-1]["cell_type"] == "markdown" and src(cells[-1]).startswith("# Review"):
         cells[-1] = review
