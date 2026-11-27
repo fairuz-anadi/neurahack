@@ -5,7 +5,7 @@ for Task A (class 0–5), Task B (techniques T1–T6), Task C (victim action 0�
 Team: Fairuz Anadi, Rabib, Samprity. Read `docs/TEAM_CONTRACT.md` before writing code.
 
 **Never commit competition data (`sample.csv`, `test.csv`, `sample_submission.csv`), `.env`, Kaggle or Hugging Face
-tokens, or model checkpoints. This repository is public.**
+tokens, or model checkpoints. Keep this repository private: sharing competition code publicly outside Kaggle is against the rules.**
 
 ## Final notebooks (run on Kaggle, GPU T4)
 
@@ -14,6 +14,7 @@ tokens, or model checkpoints. This repository is public.**
 | `notebooks/09_v3.ipynb` | final team pipeline: synthetic data + TF-IDF, XLM-R base, frozen embeddings (e5-large, bge-m3, LaBSE), ensemble |
 | `notebooks/10_v3_large.ipynb` | same, with XLM-R large |
 | `notebooks/11_v3_large_ft.ipynb` | `10_v3_large` + the FT family (fine-tuned multilingual-e5-small, see below) |
+| `notebooks/12_duo.ipynb` | TF-IDF + XLM-R large + XLM-R base, no embedding/FT family; final cell keeps the best CV candidate |
 
 Rulebook v1.3: no training on test text. Pseudo-labelling is removed; `test.csv` is used only for final inference.
 Submission package notes: `submission/README.md`. Rule-compliance audit: `AUDIT.md`.
