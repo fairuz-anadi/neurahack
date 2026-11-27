@@ -8,7 +8,7 @@ Add a row the moment you start using something. Undeclared resources are prohibi
 | nbformat | library | notebook builder (not in final run) | PyPI | BSD-3 |
 | torch, transformers, tokenizers | library | fine-tuning (Samprity) | PyPI | BSD-3 / Apache-2.0 / Apache-2.0 |
 | intfloat/multilingual-e5-small | pretrained model | fine-tuning (Samprity) | https://huggingface.co/intfloat/multilingual-e5-small | MIT (checked on model card, 26 Nov) |
-| Qwen/Qwen2.5-7B-Instruct | pretrained LLM (local, no API) | few-shot eval, synthetic data, test pseudo-labels (Samprity) | https://huggingface.co/Qwen/Qwen2.5-7B-Instruct | Apache-2.0 |
+| Qwen/Qwen2.5-7B-Instruct | pretrained LLM (local, no API) | few-shot eval, synthetic data (Samprity) | https://huggingface.co/Qwen/Qwen2.5-7B-Instruct | Apache-2.0 |
 | vllm (optional) | library | fast local LLM inference for the teacher | PyPI | Apache-2.0 |
 | BTTC: Bangla Tri-class Text Corpus (Tahmid et al.) | external dataset, 10,283 Bangla SMS/Telegram, HAM/PROMO/SPAM | external training data (FT3/FT4) | https://data.mendeley.com/datasets/5wrm959d6f/1 (DOI 10.17632/5wrm959d6f.1) | CC BY 4.0 |
 | Labeled Bangla SMS Spam and Ham (Islam et al.) | external dataset, 3,999 Bangla SMS, spam/ham | external training data | https://data.mendeley.com/datasets/hhd43jbv9p/1 (DOI 10.17632/hhd43jbv9p.1) | CC BY 4.0 |
@@ -25,7 +25,8 @@ Add a row the moment you start using something. Undeclared resources are prohibi
 - External data snapshot: snapshots/external_v2.csv.gz (same build code, CC BY 4.0 sources only) is embedded
   in the AutoTrain notebook and used only if the Mendeley download is refused (HTTP 403 seen from Kaggle).
 - Public code: none copied. (List repo/notebook URL + license if any is used.)
-- Pseudo-labeling / unlabeled test text: optional teacher step (models/finetune/llm.py teacher) — Qwen2.5-7B labels a
-  seeded random sample of test rows by code; e5 student trains on them. Only model predictions; declared.
+- Pseudo-labeling / unlabeled test text: **removed (rulebook v1.3)**. No test text is used for training, preprocessing,
+  calibration, thresholds or augmentation; test.csv is read only for final inference. The teacher code in
+  models/finetune/llm.py is not used by the final FT cell (docs/FT_INTEGRATION.md).
 - Synthetic data: models/finetune/llm.py synth — Qwen2.5-7B, greedy decoding, seeded spec grid, official class
   definitions only (no sample.csv rows in prompts).
