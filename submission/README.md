@@ -75,6 +75,7 @@ After the first full training run, the notebook selects up to **4,000 test rows 
 - This is done entirely by code and uses **only model predictions**; no test labels are looked up or edited by hand.
 - An in-fold check measures the gain on the real labeled rows before the round is applied. It found **+0.02 to +0.06 Task A F1** for TF-IDF. If the check shows a loss larger than 0.01, the notebook turns pseudo-labeling off automatically.
 - With pseudo-labels, the final models train on up to about 36,000 rows (12k synthetic + up to 24k pseudo-labeled + upweighted real rows).
+- This applies to the `tfidf` and `xlmr` families only. For the embedding family, pseudo-labeling and noise augmentation were tested and rejected by CV, so that family is trained on the 86 real rows only. Pseudo-labeling scored proxy 0.725 vs 0.759 without it. Noise augmentation scored 0.727 vs 0.756 on 0.8 × clean + 0.2 × noisy text.
 
 ### 3.5 Ensemble, decoding and calibration
 - **Ensemble:** the family probabilities for A, B and C are averaged with weights. The weights and the technique threshold are chosen by grid search on out-of-fold predictions, then **shrunk 50% toward equal weights** to avoid overfitting 86 rows.
@@ -129,7 +130,8 @@ After the first full training run, the notebook selects up to **4,000 test rows 
 | Competition data | Kaggle competition | Organizer | `sample.csv` for training and validation; `test.csv` for inference and pseudo-labeling |
 
 - **No external datasets.**
-- **No hosted LLM or inference API calls.**
+- **No hosted LLM or inference API calls.** API steps: none. API cost: 0. The `.env` file is empty.
+- **No public code** beyond library documentation.
 - AI coding assistants were used while writing the code, which the rules permit.
 
 ---
@@ -138,7 +140,7 @@ After the first full training run, the notebook selects up to **4,000 test rows 
 
 **Environment:** Kaggle Notebook, latest container image, **GPU T4**, **Internet ON** (needed to download the four pretrained models from Hugging Face).
 
-**Libraries:** the versions preinstalled in the Kaggle image. Reference run: numpy 2.1.3, pandas 2.3.3, scikit-learn 1.6.1, scipy 1.16.3; the notebook prints the torch, transformers and sentence-transformers versions. `sentence-transformers` is installed automatically if it's missing. No other installs are needed.
+**Libraries:** the versions preinstalled in the Kaggle image. Reference run: python `[from run]`, numpy 2.1.3, pandas 2.3.3, scikit-learn 1.6.1, scipy 1.16.3, torch 2.11.0, transformers `[from run]`, sentence-transformers 5.7.0. The notebook prints all of them (setup cell and cell B1). If the image lacks `sentence-transformers`, it is installed as the pinned version `5.7.0`. No other installs are needed.
 
 **Steps:**
 1. Create a Kaggle notebook and import `notebook.ipynb`.
