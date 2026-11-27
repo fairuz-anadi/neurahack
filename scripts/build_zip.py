@@ -2,7 +2,7 @@
 four items: submission.csv, notebook.ipynb, README.md and .env (empty if no API is used).
 
     python scripts/build_zip.py --team Team_Hampton --csv outputs/submission.csv \
-        --notebook notebooks/07_final_team.ipynb --readme submission/README.md [--env path/to/.env]
+        --notebook notebooks/11_v3_large_ft.ipynb --readme submission/README.md [--env path/to/.env]
 
 Refuses to build if the submission is invalid, the notebook contains something that looks like an
 API key, the README is missing or still has placeholders, or the .env is missing. Never commit the
@@ -55,7 +55,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--team", required=True, help="registered team name, e.g. Team_Hampton")
     ap.add_argument("--csv", default="outputs/submission.csv")
-    ap.add_argument("--notebook", default="notebooks/07_final_team.ipynb")
+    ap.add_argument("--notebook", default="notebooks/11_v3_large_ft.ipynb")
     ap.add_argument("--readme", default="submission/README.md")
     ap.add_argument("--env", default=None, help="path to the .env to include; default: an empty .env")
     args = ap.parse_args()

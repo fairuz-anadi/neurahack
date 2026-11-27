@@ -1,8 +1,8 @@
 """Put the 5-part Declaration (first cell) and the Review section (last cell) into a final-team notebook.
 
     # repo copies (also applies the two print fixes; needs a new Kaggle run to show in outputs):
-    python scripts/patch_markdown.py notebooks/09_final_team_v3.ipynb --xlmr base --prints
-    python scripts/patch_markdown.py notebooks/10_final_team_v3_large.ipynb --xlmr large --prints
+    python scripts/patch_markdown.py notebooks/09_v3.ipynb --xlmr base --prints
+    python scripts/patch_markdown.py notebooks/10_v3_large.ipynb --xlmr large --prints
 
     # notebook downloaded from the Kaggle run that made submission.csv (markdown ONLY, outputs untouched):
     python scripts/patch_markdown.py downloaded.ipynb --xlmr base --out notebook.ipynb

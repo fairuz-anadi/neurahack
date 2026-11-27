@@ -1,6 +1,6 @@
 # Rule-compliance audit: `notebooks/07_final_team.ipynb`
 
-> **Update, 27 Nov, about 12:00.** Rulebook v1.3 bans training on test text. Anadi's `09_final_team_v3` / `10_final_team_v3_large` remove pseudo-labeling and the in-fold pseudo check, and use `test.csv` for inference only, so **D1 is resolved**. Those notebooks started from the original 07. Branch `v3-declaration-review` therefore applies only the markdown and print fixes, as Anadi asked, via `scripts/patch_markdown.py`:
+> **Update, 27 Nov, about 12:00.** Rulebook v1.3 bans training on test text. Anadi's `09_v3` / `10_v3_large` remove pseudo-labeling and the in-fold pseudo check, and use `test.csv` for inference only, so **D1 is resolved**. Those notebooks started from the original 07. Branch `v3-declaration-review` therefore applies only the markdown and print fixes, as Anadi asked, via `scripts/patch_markdown.py`:
 > * the 5-part declaration, updated for v1.3, the v3 templates, 2-seed XLM-R and base vs large;
 > * a Review section at the end;
 > * `print(chk.head())` → aggregate print;
