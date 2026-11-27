@@ -28,6 +28,7 @@ fraud = L["llm_label"].astype(int).isin([1, 2, 3, 4]).values
 tech = np.where(fraud, L["llm_tech"].replace("", "NONE"), "NONE")
 tech = np.where(fraud & (tech == "NONE"), "T5", tech)
 act = np.where(fraud, L["llm_action"].astype(int), 0)
+act = np.where(fraud & (act == 0), L["llm_label"].astype(int).map({1: 1, 2: 3, 3: 4, 4: 2}).fillna(0).astype(int), act)  # class default action
 sub = pd.DataFrame({"id": test_ids,
                     "label": np.where(ok, L["llm_label"].astype(int), F["label"].astype(int)),
                     "techniques": np.where(ok, tech, F["techniques"]),
